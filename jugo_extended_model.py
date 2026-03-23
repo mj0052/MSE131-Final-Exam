@@ -8,38 +8,29 @@ def choose_item(r, scenario_name):
     p_smoothie = 0.50
     p_juice = 0.30
 
-    # Extension 5: more smoothie bowls ordered
+    # Scenario: more smoothie bowls ordered
     if scenario_name == "More Bowls":
         p_smoothie = 0.40
         p_juice = 0.30
 
     if x < p_smoothie:
         item_name = "Smoothie"
-
         if scenario_name == "Slow Service":
             service_time = r.uniform(3.0, 4.5)
-        elif scenario_name == "Fast Service":
-            service_time = r.uniform(2.0, 3.0)
         else:
             service_time = r.uniform(2.5, 4.0)
 
     elif x < p_smoothie + p_juice:
         item_name = "Fresh Pressed Juice"
-
         if scenario_name == "Slow Service":
             service_time = r.uniform(3.5, 5.5)
-        elif scenario_name == "Fast Service":
-            service_time = r.uniform(2.5, 4.0)
         else:
             service_time = r.uniform(3.0, 5.0)
 
     else:
         item_name = "Smoothie Bowl"
-
         if scenario_name == "Slow Service":
             service_time = r.uniform(6.0, 8.0)
-        elif scenario_name == "Fast Service":
-            service_time = r.uniform(4.0, 5.5)
         else:
             service_time = r.uniform(5.0, 7.0)
 
@@ -55,11 +46,11 @@ def simulate_jugo(scenario_name):
     num_servers = 2
     mean_interarrival = 2.5
 
-    # Extension 1: more workers
+    # Scenario 1: more workers
     if scenario_name == "Three Workers":
         num_servers = 3
 
-    # Extension 2: higher demand
+    # Scenario 2: higher demand
     if scenario_name == "High Demand":
         mean_interarrival = 1.5
 
@@ -76,7 +67,7 @@ def simulate_jugo(scenario_name):
         arrival_times.append(current_time)
 
     server_available = [0.0] * num_servers
-    server_busy_within_horizon = [0.0] * num_servers
+    server_busy = [0.0] * num_servers
 
     service_starts = []
     waiting_times = []
@@ -94,20 +85,11 @@ def simulate_jugo(scenario_name):
                 best_server = j
 
         service_start = max(arrival_time, server_available[best_server])
-        departure_time = service_start + service_time
         waiting_time = service_start - arrival_time
+        departure_time = service_start + service_time
 
-        # Update server availability
         server_available[best_server] = departure_time
-
-        # Count only busy time within the 120 minute horizon
-        busy_start = service_start
-        busy_end = departure_time
-
-        if busy_start < simulation_minutes:
-            if busy_end > simulation_minutes:
-                busy_end = simulation_minutes
-            server_busy_within_horizon[best_server] += (busy_end - busy_start)
+        server_busy[best_server] += service_time
 
         service_starts.append(service_start)
         waiting_times.append(waiting_time)
@@ -128,9 +110,9 @@ def simulate_jugo(scenario_name):
         if t <= simulation_minutes:
             throughput += 1
 
-    average_utilization = sum(server_busy_within_horizon) / (num_servers * simulation_minutes)
+    average_utilization = sum(server_busy) / (num_servers * simulation_minutes)
 
-    # Average queue length
+    # Queue length calculation
     events = []
     for i in range(total_arrivals):
         events.append((arrival_times[i], "arrival"))
@@ -144,9 +126,6 @@ def simulate_jugo(scenario_name):
 
     for event in events:
         event_time, event_type = event
-
-        if event_time > simulation_minutes:
-            event_time = simulation_minutes
 
         if event_time > last_time:
             area_under_queue += queue_length * (event_time - last_time)
@@ -196,8 +175,6 @@ def run_all_scenarios():
     results.append(simulate_jugo("Three Workers"))
     results.append(simulate_jugo("High Demand"))
     results.append(simulate_jugo("Slow Service"))
-    results.append(simulate_jugo("Fast Service"))
-    results.append(simulate_jugo("More Bowls"))
 
     print_results_table(results)
 
