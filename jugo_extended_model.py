@@ -179,4 +179,4 @@ def run_all_scenarios():
     print_results_table(results)
 
 
-run_all_scenarios()
+run_all_scenarios() 
